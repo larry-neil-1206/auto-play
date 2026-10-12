@@ -96,7 +96,7 @@ You can copy that JSON and change the steps. Supported step types:
 
 ```json
 { "type": "key", "keys": "ctrl+tab", "hold_ms": 40 }
-{ "type": "move", "x": 400, "y": 300, "absolute": true }
+{ "type": "move", "x": { "min": -80, "max": 80 }, "y": { "min": -80, "max": 80 }, "absolute": false }
 { "type": "scroll", "notches": -3 }
 { "type": "sleep", "ms": 400 }
 ```

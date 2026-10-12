@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import random
 import time
 from pathlib import Path
 from typing import Any, Callable
@@ -64,14 +65,31 @@ def run_until_escape(
         sleep_until_escape(interval)
 
 
+def _coord(value: Any, name: str) -> int:
+    """Accept a fixed int or a random range: {\"min\": -40, \"max\": 40} or [-40, 40]."""
+    if isinstance(value, bool) or value is None:
+        raise ValueError(f"Move {name} must be a number or a min/max range")
+    if isinstance(value, (int, float)):
+        return int(value)
+    if isinstance(value, dict):
+        low, high = int(value["min"]), int(value["max"])
+    elif isinstance(value, (list, tuple)) and len(value) == 2:
+        low, high = int(value[0]), int(value[1])
+    else:
+        raise ValueError(f"Move {name} must be a number or a min/max range")
+    if low > high:
+        low, high = high, low
+    return random.randint(low, high)
+
+
 def run_step(step: dict[str, Any]) -> None:
     kind = step.get("type")
     if kind == "key":
         press_chord(str(step["keys"]), hold_ms=int(step.get("hold_ms", 40)))
     elif kind == "move":
         move_pointer(
-            int(step["x"]),
-            int(step["y"]),
+            _coord(step["x"], "x"),
+            _coord(step["y"], "y"),
             absolute=bool(step.get("absolute", True)),
         )
     elif kind == "scroll":
