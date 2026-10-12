@@ -1,0 +1,10 @@
+{
+  "delay_ms": 400,
+  "steps": [
+    { "type": "key", "keys": "ctrl+tab", "hold_ms": 40 },
+    { "type": "sleep", "ms": 400 },
+    { "type": "move", "x": 400, "y": 300, "absolute": true },
+    { "type": "sleep", "ms": 200 },
+    { "type": "scroll", "notches": -3 }
+  ]
+}
