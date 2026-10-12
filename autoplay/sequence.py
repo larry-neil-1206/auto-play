@@ -65,20 +65,28 @@ def run_until_escape(
         sleep_until_escape(interval)
 
 
-def _coord(value: Any, name: str) -> int:
-    """Accept a fixed int or a random range: {\"min\": -40, \"max\": 40} or [-40, 40]."""
+def _int_or_range(value: Any, name: str, *, nonzero: bool = False) -> int:
+    """Accept a fixed int or a random range: {\"min\": -3, \"max\": 3} or [-3, 3]."""
     if isinstance(value, bool) or value is None:
-        raise ValueError(f"Move {name} must be a number or a min/max range")
+        raise ValueError(f"{name} must be a number or a min/max range")
     if isinstance(value, (int, float)):
-        return int(value)
+        chosen = int(value)
+        if nonzero and chosen == 0:
+            raise ValueError(f"{name} cannot be 0")
+        return chosen
     if isinstance(value, dict):
         low, high = int(value["min"]), int(value["max"])
     elif isinstance(value, (list, tuple)) and len(value) == 2:
         low, high = int(value[0]), int(value[1])
     else:
-        raise ValueError(f"Move {name} must be a number or a min/max range")
+        raise ValueError(f"{name} must be a number or a min/max range")
     if low > high:
         low, high = high, low
+    if nonzero and low <= 0 <= high:
+        choices = [n for n in range(low, high + 1) if n != 0]
+        if not choices:
+            raise ValueError(f"{name} range must include a non-zero value")
+        return random.choice(choices)
     return random.randint(low, high)
 
 
@@ -88,12 +96,13 @@ def run_step(step: dict[str, Any]) -> None:
         press_chord(str(step["keys"]), hold_ms=int(step.get("hold_ms", 40)))
     elif kind == "move":
         move_pointer(
-            _coord(step["x"], "x"),
-            _coord(step["y"], "y"),
+            _int_or_range(step["x"], "x"),
+            _int_or_range(step["y"], "y"),
             absolute=bool(step.get("absolute", True)),
         )
     elif kind == "scroll":
-        scroll_vertical(int(step.get("notches", step.get("amount", -1))))
+        notches = step.get("notches", step.get("amount", -1))
+        scroll_vertical(_int_or_range(notches, "notches", nonzero=True))
     elif kind == "sleep":
         ms = step.get("ms", step.get("milliseconds", 0))
         sleep_until_escape(float(ms) / 1000)

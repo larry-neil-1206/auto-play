@@ -3,6 +3,8 @@
   "steps": [
     { "type": "key", "keys": "ctrl+tab", "hold_ms": 40 },
     { "type": "sleep", "ms": 1000 },
+    { "type": "key", "keys": "alt+tab", "hold_ms": 40 },
+    { "type": "sleep", "ms": 1000 },
     {
       "type": "move",
       "x": { "min": -80, "max": 80 },
@@ -10,6 +12,6 @@
       "absolute": false
     },
     { "type": "sleep", "ms": 1000 },
-    { "type": "scroll", "notches": -3 }
+    { "type": "scroll", "notches": { "min": -3, "max": 3 } }
   ]
 }
