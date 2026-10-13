@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import random
+import sys
 import time
 from pathlib import Path
 from typing import Any, Callable
@@ -126,7 +127,14 @@ def run_step(step: dict[str, Any]) -> None:
 
 
 def load_sequence(path: str | Path) -> dict[str, Any]:
-    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    sequence_path = Path(path)
+    if not sequence_path.is_file():
+        bundle_root = getattr(sys, "_MEIPASS", None)
+        if bundle_root is not None:
+            bundled_path = Path(bundle_root) / sequence_path
+            if bundled_path.is_file():
+                sequence_path = bundled_path
+    data = json.loads(sequence_path.read_text(encoding="utf-8"))
     if "steps" not in data or not isinstance(data["steps"], list):
         raise ValueError("Sequence JSON must contain a 'steps' array")
     return data

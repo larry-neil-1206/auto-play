@@ -11,6 +11,23 @@ Events go to whichever window is **in the foreground**. Commands **repeat foreve
 
 No `pip install` is required. The project only uses the standard library.
 
+## Build a Windows executable
+
+Install PyInstaller once on the build computer, then run the build script whenever you want to update the executable:
+
+```bash
+python -m pip install pyinstaller
+build_exe.bat
+```
+
+The script rebuilds `dist/autoplay.exe` from the current source and includes the Python runtime and sample sequence. Run it again after changing code or the sample sequence. The executable can run on compatible 64-bit Windows computers without Python installed. For example:
+
+```bash
+autoplay.exe run sequences/example.json
+```
+
+The bundled sample is used when that relative JSON path is not available beside the executable. Builds for other operating systems or CPU architectures need to be produced on those platforms.
+
 ## Start here
 
 Open a terminal in this project folder (`auto-play`).
