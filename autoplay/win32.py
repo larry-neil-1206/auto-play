@@ -77,6 +77,22 @@ SendInput = user32.SendInput
 SendInput.argtypes = (wintypes.UINT, ctypes.POINTER(INPUT), ctypes.c_int)
 SendInput.restype = wintypes.UINT
 
+GetForegroundWindow = user32.GetForegroundWindow
+GetForegroundWindow.argtypes = ()
+GetForegroundWindow.restype = wintypes.HWND
+
+GetWindowTextLengthW = user32.GetWindowTextLengthW
+GetWindowTextLengthW.argtypes = (wintypes.HWND,)
+GetWindowTextLengthW.restype = ctypes.c_int
+
+GetWindowTextW = user32.GetWindowTextW
+GetWindowTextW.argtypes = (wintypes.HWND, wintypes.LPWSTR, ctypes.c_int)
+GetWindowTextW.restype = ctypes.c_int
+
+GetWindowThreadProcessId = user32.GetWindowThreadProcessId
+GetWindowThreadProcessId.argtypes = (wintypes.HWND, ctypes.POINTER(wintypes.DWORD))
+GetWindowThreadProcessId.restype = wintypes.DWORD
+
 MapVirtualKeyW = user32.MapVirtualKeyW
 MapVirtualKeyW.argtypes = (wintypes.UINT, wintypes.UINT)
 MapVirtualKeyW.restype = wintypes.UINT
@@ -92,6 +108,52 @@ GetCursorPos.restype = wintypes.BOOL
 GetAsyncKeyState = user32.GetAsyncKeyState
 GetAsyncKeyState.argtypes = (ctypes.c_int,)
 GetAsyncKeyState.restype = wintypes.SHORT
+
+kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+OpenProcess = kernel32.OpenProcess
+OpenProcess.argtypes = (wintypes.DWORD, wintypes.BOOL, wintypes.DWORD)
+OpenProcess.restype = wintypes.HANDLE
+
+QueryFullProcessImageNameW = kernel32.QueryFullProcessImageNameW
+QueryFullProcessImageNameW.argtypes = (
+    wintypes.HANDLE,
+    wintypes.DWORD,
+    wintypes.LPWSTR,
+    ctypes.POINTER(wintypes.DWORD),
+)
+QueryFullProcessImageNameW.restype = wintypes.BOOL
+
+CloseHandle = kernel32.CloseHandle
+CloseHandle.argtypes = (wintypes.HANDLE,)
+CloseHandle.restype = wintypes.BOOL
+
+
+def get_foreground_window_info() -> tuple[str, str]:
+    """Return the foreground window's process executable name and title."""
+    hwnd = GetForegroundWindow()
+    if not hwnd:
+        return "", ""
+
+    title_length = GetWindowTextLengthW(hwnd)
+    title_buffer = ctypes.create_unicode_buffer(title_length + 1)
+    GetWindowTextW(hwnd, title_buffer, len(title_buffer))
+
+    process_id = wintypes.DWORD()
+    GetWindowThreadProcessId(hwnd, ctypes.byref(process_id))
+    process_name = ""
+    process_handle = OpenProcess(0x1000, False, process_id.value)
+    if process_handle:
+        try:
+            image_buffer = ctypes.create_unicode_buffer(32768)
+            image_length = wintypes.DWORD(len(image_buffer))
+            if QueryFullProcessImageNameW(
+                process_handle, 0, image_buffer, ctypes.byref(image_length)
+            ):
+                process_name = image_buffer.value.rsplit("\\", 1)[-1]
+        finally:
+            CloseHandle(process_handle)
+
+    return process_name, title_buffer.value
 
 
 def send_inputs(events: list[INPUT]) -> int:

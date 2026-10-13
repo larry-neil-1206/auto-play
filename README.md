@@ -29,6 +29,12 @@ python -m autoplay position
 
 That command is a good sanity check. If it prints two numbers, Python and the Win32 bindings are working.
 
+Print the active window's process name and title:
+
+```bash
+python -m autoplay active
+```
+
 ## Repeat until Escape
 
 Each emit command waits **2 seconds** first so you can click the window that should receive the events. Then it keeps sending the event every **0.5 seconds** until you press **Escape**.
@@ -78,6 +84,14 @@ python -m autoplay key ctrl+tab --once
 python -m autoplay scroll -3 --delay 0 --interval 0.2
 ```
 
+To send a randomly selected Ctrl+Alt+Up or Ctrl+Alt+Down while Chrome is active and its window title contains "Discord":
+
+```bash
+python -m autoplay watch-discord
+```
+
+This title check is a heuristic, not an exact URL check. Chrome does not normally include the tab URL in its window title. Use `python -m autoplay active` to see the title Chrome reports. The watcher checks the foreground window on each interval and stops with Escape; `--once` checks one time.
+
 ## Play a sequence
 
 There is a sample file at `sequences/example.json`. It sends Ctrl+Tab, moves the pointer, then scrolls down, and repeats until Escape:
@@ -96,10 +110,14 @@ You can copy that JSON and change the steps. Supported step types:
 
 ```json
 { "type": "key", "keys": "ctrl+tab", "hold_ms": 40 }
+{ "type": "discord_navigation", "settle_ms": 100 }
 { "type": "move", "x": { "min": -80, "max": 80 }, "y": { "min": -80, "max": 80 }, "absolute": false }
 { "type": "scroll", "notches": { "min": -3, "max": 3 } }
 { "type": "sleep", "ms": 400 }
 ```
+
+Key steps accept an optional `"repeat"` count or min/max range, such as `"repeat": { "min": 2, "max": 5 }`. A range is randomized each time that step runs.
+The `discord_navigation` step waits briefly for a tab switch, then randomly sends Ctrl+Alt+Up or Ctrl+Alt+Down only when Chrome is foreground and its title contains "Discord".
 
 Optional sequence fields:
 

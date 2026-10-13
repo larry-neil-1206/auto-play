@@ -2,8 +2,13 @@
   "delay_ms": 1000,
   "steps": [
     { "type": "key", "keys": "ctrl+tab", "hold_ms": 40 },
+    { "type": "discord_navigation", "settle_ms": 100 },
     { "type": "sleep", "ms": 1000 },
     { "type": "key", "keys": "alt+tab", "hold_ms": 40 },
+    { "type": "key", "keys": "up", "hold_ms": 40, "repeat": { "min": 2, "max": 5 } },
+    { "type": "key", "keys": "down", "hold_ms": 40, "repeat": { "min": 2, "max": 5 } },
+    { "type": "key", "keys": "right", "hold_ms": 40, "repeat": { "min": 2, "max": 5 } },
+    { "type": "key", "keys": "left", "hold_ms": 40, "repeat": { "min": 2, "max": 5 } },
     { "type": "sleep", "ms": 1000 },
     {
       "type": "move",

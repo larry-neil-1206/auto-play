@@ -6,7 +6,15 @@ import argparse
 import sys
 
 from autoplay.emulator import cursor_position, move_pointer, press_chord, scroll_vertical
-from autoplay.sequence import SequenceAborted, load_sequence, run_sequence, run_until_escape, sleep_until_escape
+from autoplay.sequence import (
+    SequenceAborted,
+    load_sequence,
+    press_random_discord_navigation,
+    run_sequence,
+    run_until_escape,
+    sleep_until_escape,
+)
+from autoplay.win32 import get_foreground_window_info
 
 
 def _add_common(parser: argparse.ArgumentParser) -> None:
@@ -68,6 +76,14 @@ def build_parser() -> argparse.ArgumentParser:
 
     pos = sub.add_parser("position", help="Print the current cursor position")
 
+    sub.add_parser("active", help="Print the active window's process and title")
+
+    watch = sub.add_parser(
+        "watch-discord",
+        help="Send a random Ctrl+Alt+Up/Down while Chrome's active title contains Discord",
+    )
+    _add_common(watch)
+
     run = sub.add_parser("run", help="Play a JSON sequence of events")
     run.add_argument("path", help="Path to a sequence JSON file")
     _add_common(run)
@@ -81,6 +97,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "position":
         x, y = cursor_position()
         print(f"{x} {y}")
+        return 0
+    if args.command == "active":
+        process_name, title = get_foreground_window_info()
+        print(f"{process_name or '<unknown process>'}: {title or '<untitled window>'}")
         return 0
 
     try:
@@ -116,6 +136,8 @@ def main(argv: list[str] | None = None) -> int:
                 loops=loops or None,
                 interval=args.interval,
             )
+        elif args.command == "watch-discord":
+            run_until_escape(press_random_discord_navigation, interval=gap, loops=loops)
     except SequenceAborted as exc:
         print(exc, file=sys.stderr)
         return 0

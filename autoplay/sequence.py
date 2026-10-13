@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from autoplay.emulator import move_pointer, press_chord, scroll_vertical
-from autoplay.win32 import GetAsyncKeyState
+from autoplay.win32 import GetAsyncKeyState, get_foreground_window_info
 
 VK_ESCAPE = 0x1B
 
@@ -90,10 +90,22 @@ def _int_or_range(value: Any, name: str, *, nonzero: bool = False) -> int:
     return random.randint(low, high)
 
 
+def press_random_discord_navigation() -> bool:
+    process_name, title = get_foreground_window_info()
+    if process_name.casefold() != "chrome.exe" or "discord" not in title.casefold():
+        return False
+    press_chord(f"ctrl+alt+{random.choice(('up', 'down'))}")
+    return True
+
+
 def run_step(step: dict[str, Any]) -> None:
     kind = step.get("type")
     if kind == "key":
-        press_chord(str(step["keys"]), hold_ms=int(step.get("hold_ms", 40)))
+        repeats = _int_or_range(step.get("repeat", 1), "repeat")
+        if repeats < 1:
+            raise ValueError("repeat must be at least 1")
+        for _ in range(repeats):
+            press_chord(str(step["keys"]), hold_ms=int(step.get("hold_ms", 40)))
     elif kind == "move":
         move_pointer(
             _int_or_range(step["x"], "x"),
@@ -106,6 +118,9 @@ def run_step(step: dict[str, Any]) -> None:
     elif kind == "sleep":
         ms = step.get("ms", step.get("milliseconds", 0))
         sleep_until_escape(float(ms) / 1000)
+    elif kind == "discord_navigation":
+        sleep_until_escape(float(step.get("settle_ms", 100)) / 1000)
+        press_random_discord_navigation()
     else:
         raise ValueError(f"Unknown step type: {kind!r}")
 
